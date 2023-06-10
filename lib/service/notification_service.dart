@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:chegg_no_question_notifier/exceptions/service_exceptions.dart';
 import 'package:chegg_no_question_notifier/model/availability_status.dart';
 import 'package:chegg_no_question_notifier/model/chegg_profile.dart';
 
@@ -24,22 +25,25 @@ class NotificationService {
     final profile = CheggProfile(username: username, password: password);
 
     final response = await http.post(
-      Uri.parse('http://localhost:5000/api/status'),
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-        "Access-Control-Allow-Origin": "*"
-      },
-      body: jsonEncode(profile.toJson())
-    );
+        Uri.parse('https://b877-103-44-175-239.ngrok-free.app/api/status'),
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+          "Access-Control-Allow-Origin": "*"
+        },
+        body: jsonEncode(profile.toJson()));
+
+    print(response.statusCode);
 
     if (response.statusCode == 200) {
       return parseAvailabilityStatus(response.body);
-    } else if (response.statusCode == 500) {
-      throw const HttpException('Internal Server Error');
-    } else if (response.statusCode == 403) {
-      throw const HttpException('User Forbidden');
+    } else if (response.statusCode == 500 || response.statusCode == 502) {
+      throw const ServerException('Internal Server Error');
+    } else if (response.statusCode == 400) {
+      throw const BadRequestException('User Forbidden');
+    } else if (response.statusCode == 404) {
+      throw const ClientException('Not connected to internet');
     } else {
-      throw Exception('Unknown exception found');
+      throw const HttpException('Unknown exception found');
     }
   }
 }
