@@ -9,11 +9,12 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
-class NotificationService {
+class CheggQuestionStatusService {
   final String username;
   final String password;
 
-  const NotificationService({required this.username, required this.password});
+  const CheggQuestionStatusService(
+      {required this.username, required this.password});
 
   AvailabilityStatus parseAvailabilityStatus(String responseBody) {
     final parseJsonMap = jsonDecode(responseBody);

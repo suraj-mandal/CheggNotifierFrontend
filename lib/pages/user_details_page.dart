@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:chegg_no_question_notifier/exceptions/service_exceptions.dart';
 import 'package:chegg_no_question_notifier/model/availability_status.dart';
-import 'package:chegg_no_question_notifier/service/notification_service.dart';
+import 'package:chegg_no_question_notifier/service/chegg_question_status_service.dart';
 import 'package:chegg_no_question_notifier/widgets/separator.dart';
 import 'package:flutter/material.dart';
 
@@ -46,7 +46,7 @@ class _UserDetailsPageState extends State<UserDetailsPage> {
       isLoading = true;
       statusButtonDisabled = true;
     });
-    NotificationService notificationService = NotificationService(
+    CheggQuestionStatusService notificationService = CheggQuestionStatusService(
         username: _usernameController.text, password: _passwordController.text);
     try {
       var status = await notificationService.fetchQuestionStatus();
@@ -91,9 +91,9 @@ class _UserDetailsPageState extends State<UserDetailsPage> {
               TextField(
                 controller: _usernameController,
                 decoration: const InputDecoration(
-                    hintText: 'Enter username',
+                    hintText: 'Enter Chegg Expert Username',
                     border: OutlineInputBorder(),
-                    labelText: 'Username'),
+                    labelText: 'Expert Username'),
               ),
               const Separator(),
               TextField(
@@ -126,27 +126,28 @@ class _UserDetailsPageState extends State<UserDetailsPage> {
                       ? ElevatedButton(
                           onPressed: reset, child: const Text('Stop Timer'))
                       : ElevatedButton(
-                      onPressed: () {
-                        // save the details to a cache db to be accessed later
+                          onPressed: () {
+                            // save the details to a cache db to be accessed later
 
-                        // simulate the timer that will send api requests after every 30 seconds
-                        setState(() {
-                          isTimerOn = true;
-                        });
+                            // simulate the timer that will send api requests after every 30 seconds
+                            setState(() {
+                              isTimerOn = true;
+                            });
 
-                        checkForQuestion();
-
-                        Timer.periodic(const Duration(seconds: 60), (timer) {
-                          if (!isTimerOn) {
-                            debugPrint('Timer is canceled!');
-                            timer.cancel();
-                          } else if (!isLoading) {
-                            debugPrint(timer.tick.toString());
                             checkForQuestion();
-                          }
-                        });
-                      },
-                      child: const Text('Time it'))
+
+                            Timer.periodic(const Duration(seconds: 60),
+                                (timer) {
+                              if (!isTimerOn) {
+                                debugPrint('Timer is canceled!');
+                                timer.cancel();
+                              } else if (!isLoading) {
+                                debugPrint(timer.tick.toString());
+                                checkForQuestion();
+                              }
+                            });
+                          },
+                          child: const Text('Time it'))
                 ],
               ),
               const Separator(),
