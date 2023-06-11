@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:chegg_no_question_notifier/exceptions/service_exceptions.dart';
 import 'package:chegg_no_question_notifier/model/availability_status.dart';
 import 'package:chegg_no_question_notifier/service/notification_service.dart';
@@ -33,7 +35,45 @@ class _UserDetailsPageState extends State<UserDetailsPage> {
 
   bool passwordVisible = false;
 
+  bool statusButtonDisabled = false;
+
   String? _error;
+
+  void checkForQuestion() async {
+    setState(() {
+      _error = null;
+      _availabilityStatus = null;
+      isLoading = true;
+      statusButtonDisabled = true;
+    });
+    NotificationService notificationService = NotificationService(
+        username: _usernameController.text, password: _passwordController.text);
+    try {
+      var status = await notificationService.fetchQuestionStatus();
+      setState(() {
+        isLoading = false;
+        _availabilityStatus = status;
+        statusButtonDisabled = false;
+      });
+    } catch (e) {
+      String serviceError = fetchErrorString(e);
+      setState(() {
+        isLoading = false;
+        _error = serviceError;
+        statusButtonDisabled = false;
+      });
+    }
+  }
+
+  void reset() {
+    setState(() {
+      _error = null;
+      _availabilityStatus = null;
+      isLoading = false;
+      isTimerOn = false;
+      statusButtonDisabled = false;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -76,37 +116,16 @@ class _UserDetailsPageState extends State<UserDetailsPage> {
               ),
               const Separator(),
               ElevatedButton(
-                  onPressed: () async {
-                    setState(() {
-                      _error = null;
-                      _availabilityStatus = null;
-                      isLoading = true;
-                    });
-                    NotificationService notificationService =
-                        NotificationService(
-                            username: _usernameController.text,
-                            password: _passwordController.text);
-                    try {
-                      var status =
-                          await notificationService.fetchQuestionStatus();
-                      setState(() {
-                        isLoading = false;
-                        _availabilityStatus = status;
-                      });
-                    } catch (e) {
-                      String serviceError = fetchErrorString(e);
-                      setState(() {
-                        isLoading = false;
-                        _error = serviceError;
-                      });
-                    }
-                  },
+                  onPressed: statusButtonDisabled ? null : checkForQuestion,
                   child: const Text('Check Status')),
               const Separator(),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget>[
-                  ElevatedButton(
+                  isTimerOn
+                      ? ElevatedButton(
+                          onPressed: reset, child: const Text('Stop Timer'))
+                      : ElevatedButton(
                       onPressed: () {
                         // save the details to a cache db to be accessed later
 
@@ -114,17 +133,20 @@ class _UserDetailsPageState extends State<UserDetailsPage> {
                         setState(() {
                           isTimerOn = true;
                         });
+
+                        checkForQuestion();
+
+                        Timer.periodic(const Duration(seconds: 60), (timer) {
+                          if (!isTimerOn) {
+                            debugPrint('Timer is canceled!');
+                            timer.cancel();
+                          } else if (!isLoading) {
+                            debugPrint(timer.tick.toString());
+                            checkForQuestion();
+                          }
+                        });
                       },
-                      child: const Text('Time it')),
-                  isTimerOn
-                      ? ElevatedButton(
-                          onPressed: () {
-                            setState(() {
-                              isTimerOn = false;
-                            });
-                          },
-                          child: const Text('Stop search'))
-                      : Container()
+                      child: const Text('Time it'))
                 ],
               ),
               const Separator(),

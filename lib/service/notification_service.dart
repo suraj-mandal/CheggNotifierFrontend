@@ -25,7 +25,7 @@ class NotificationService {
     final profile = CheggProfile(username: username, password: password);
 
     final response = await http.post(
-        Uri.parse('https://b877-103-44-175-239.ngrok-free.app/api/status'),
+        Uri.parse('https://chegg-notifier.serveo.net/api/status'),
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
           "Access-Control-Allow-Origin": "*"
